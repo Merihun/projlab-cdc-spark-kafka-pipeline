@@ -1,0 +1,78 @@
+{
+  "slug": "streaming",
+  "version": 1,
+  "name": "Streaming",
+  "summary": "Apache Kafka (KRaft, single node), PySpark 3.5 Structured Streaming and PostgreSQL for real-time pipeline projects.",
+  "runtimes": {
+    "python": "3.12",
+    "java": "17",
+    "spark": "3.5"
+  },
+  "services": [
+    {
+      "name": "workspace",
+      "image": "mcr.microsoft.com/devcontainers/python:1-3.12-bookworm",
+      "purpose": "Your development container: Python 3.12, Java 17, PySpark, Kafka client, JupyterLab"
+    },
+    {
+      "name": "kafka",
+      "image": "apache/kafka:4.3.1",
+      "purpose": "Single-node Kafka broker in KRaft mode (no ZooKeeper)"
+    },
+    {
+      "name": "postgres",
+      "image": "postgres:16.15-bookworm",
+      "purpose": "Relational database used as a streaming sink"
+    }
+  ],
+  "extensions": [
+    "ms-python.python",
+    "ms-python.vscode-pylance",
+    "ms-toolsai.jupyter"
+  ],
+  "ports": [
+    {
+      "port": 8888,
+      "label": "JupyterLab"
+    },
+    {
+      "port": 4040,
+      "label": "Spark UI"
+    }
+  ],
+  "post_create": [
+    "pip install -r requirements.txt"
+  ],
+  "verify": [
+    {
+      "label": "Environment tests",
+      "command": "python -m pytest -q tests/test_environment.py"
+    }
+  ],
+  "reset": [
+    {
+      "label": "Restart the broker",
+      "command": "docker compose restart kafka"
+    },
+    {
+      "label": "Reset topics and the database",
+      "command": "docker compose down -v && docker compose up -d --wait"
+    }
+  ],
+  "host_requirements": {
+    "cpus": 4,
+    "memory_gb": 8
+  },
+  "supports": [
+    "github-codespaces",
+    "vscode-dev-containers",
+    "docker-compose-lab"
+  ],
+  "limitations": [
+    "No GPU.",
+    "One Kafka broker with replication factor 1: good for learning, not for testing fault tolerance.",
+    "Spark runs in local mode. The first Kafka-connected Spark session downloads the spark-sql-kafka connector from Maven Central.",
+    "Kafka and Postgres are reachable only from the workspace (hosts `kafka:9092`, `postgres:5432`)."
+  ],
+  "devcontainer_path": ".devcontainer/devcontainer.json"
+}

@@ -1,0 +1,16 @@
+# Step 1. Write each value after its = sign, nothing else on the line. Ask PostgreSQL (psql), after make seed.
+
+# SHOW wal_level;
+wal_level=
+# The replica identity of shop.orders, as a word: default, full, nothing or index (pg_class.relreplident).
+orders_replica_identity=
+# The primary key columns of shop.order_items, in order, comma separated (no spaces).
+order_items_primary_key=
+# Orders whose status is shipped: on their way, not delivered yet.
+orders_in_transit=
+# The most orders placed on a single order_date.
+busiest_day_orders=
+# How many different order_date values the orders have.
+days_with_orders=
+# The sum of total_amount of the orders placed in September 2026 that are not cancelled, with 2 decimals.
+revenue_september=

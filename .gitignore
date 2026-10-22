@@ -1,0 +1,35 @@
+# Secrets and local overrides: never commit these.
+.env
+.env.*
+!.env.example
+
+# Python / Jupyter
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ipynb_checkpoints/
+.venv/
+
+# Spark / Delta Lake local state
+spark-warehouse/
+metastore_db/
+derby.log
+
+# dbt build output
+dbt/target/
+dbt/logs/
+dbt/dbt_packages/
+logs/
+
+# Local data files stay on your machine; commit small samples with `git add -f`.
+data/*
+!data/.gitkeep
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# This project: the lake and the checkpoints live in data/ (above); the Customer Service export is made by
+# make serve. answers/ and evidence/ are committed.
+out/
+.ruff_cache/

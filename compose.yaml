@@ -1,0 +1,137 @@
+# ProjLab: Streaming, for "Orders on the Move": the streaming lab's workspace and Kafka broker, PostgreSQL with
+# logical replication (the order system Debezium reads), and Kafka Connect with the Debezium PostgreSQL
+# connector.
+# Used by the dev container (.devcontainer/devcontainer.json) AND by plain `docker compose up`.
+# Credentials are local-only development defaults; override them in .env (never commit .env).
+name: projlab-orders-on-the-move
+
+services:
+  workspace:
+    build:
+      context: .
+      dockerfile: .devcontainer/Dockerfile
+    init: true
+    user: vscode
+    working_dir: /workspace
+    command: >-
+      jupyter lab --ip=0.0.0.0 --port=8888 --no-browser
+      --ServerApp.root_dir=/workspace --ServerApp.allow_remote_access=True
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      JUPYTER_TOKEN: ${JUPYTER_TOKEN:-projlab}
+      PYTHONPATH: /workspace
+      SPARK_DRIVER_MEMORY: ${SPARK_DRIVER_MEMORY:-1g}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      CONNECT_URL: http://connect:8083
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: ${POSTGRES_USER:-projlab}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-projlab}
+      POSTGRES_DB: ${POSTGRES_DB:-projlab}
+    volumes:
+      - .:/workspace:cached
+    ports:
+      - "127.0.0.1:${JUPYTER_PORT:-8888}:8888"
+      - "127.0.0.1:${SPARK_UI_PORT:-4040}:4040"
+    networks: [lab]
+    depends_on:
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      connect:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8888/api')"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  kafka:
+    image: apache/kafka:4.3.1
+    environment:
+      # Single node acting as both broker and KRaft controller.
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      # Topics Debezium creates (fernhill.shop.orders ...) get three partitions.
+      KAFKA_NUM_PARTITIONS: 3
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      KAFKA_HEAP_OPTS: -Xms256m -Xmx512m
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    networks: [lab]
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server kafka:9092 > /dev/null 2>&1"]
+      interval: 10s
+      timeout: 20s
+      retries: 12
+      start_period: 20s
+    # Not published to your machine; clients run in the workspace and use kafka:9092.
+
+  postgres:
+    image: postgres:16.15-bookworm
+    # Logical replication: the write-ahead log keeps enough to rebuild each row change, which is what Debezium
+    # reads through a replication slot.
+    command: ["postgres", "-c", "wal_level=logical", "-c", "max_replication_slots=4", "-c", "max_wal_senders=4"]
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-projlab}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-projlab}
+      POSTGRES_DB: ${POSTGRES_DB:-projlab}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    networks: [lab]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    # Not published to your machine. Use psql with: docker compose exec postgres psql -U projlab
+
+  connect:
+    # Kafka Connect with Debezium's connectors, from the Debezium project's official image.
+    image: quay.io/debezium/connect:3.6.2.Final
+    environment:
+      BOOTSTRAP_SERVERS: kafka:9092
+      GROUP_ID: fernhill-connect
+      # Where Connect keeps connector configs, source offsets and statuses: topics in Kafka itself.
+      CONFIG_STORAGE_TOPIC: connect_configs
+      OFFSET_STORAGE_TOPIC: connect_offsets
+      STATUS_STORAGE_TOPIC: connect_statuses
+      CONFIG_STORAGE_REPLICATION_FACTOR: 1
+      OFFSET_STORAGE_REPLICATION_FACTOR: 1
+      STATUS_STORAGE_REPLICATION_FACTOR: 1
+      HEAP_OPTS: -Xms256m -Xmx768m
+    networks: [lab]
+    depends_on:
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://127.0.0.1:8083/connector-plugins"]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 20s
+    # Not published to your machine; use it from the workspace at http://connect:8083.
+
+volumes:
+  kafka-data:
+  postgres-data:
+
+networks:
+  lab:

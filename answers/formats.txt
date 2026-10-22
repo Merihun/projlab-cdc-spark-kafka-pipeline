@@ -1,0 +1,16 @@
+# Step 3. Write each value after its = sign, nothing else on the line. From make formats.
+
+# by_day: partition folders, data files, and their average size in KB.
+by_day_partitions=
+by_day_files=
+by_day_avg_kb=
+# by_month: data files.
+by_month_files=
+# flat: the codec that wrote the fewest bytes (snappy, gzip or zstd).
+smallest_codec=
+# delta_by_month, written twice: data files on disk, and data files its current version reads.
+delta_files_on_disk=
+delta_files_current=
+# Finance's daily history of orders: by_day or by_month? And why, in one sentence.
+chosen_layout=
+why=

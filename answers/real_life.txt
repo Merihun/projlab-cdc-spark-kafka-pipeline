@@ -1,0 +1,9 @@
+# Step 7. Write each value after its = sign, nothing else on the line.
+
+# After make redeliver, make bronze and make silver: numTargetRowsUpdated of the last MERGE on silver orders
+# (its history: DESCRIBE HISTORY).
+redelivery_rows_updated=
+# The status silver shows for the shipment the carrier scanned late (its id is in PROJECT.md).
+late_shipment_status=
+# Orders in silver with a sales_channel, after the evening was processed.
+orders_with_sales_channel=

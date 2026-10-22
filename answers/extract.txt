@@ -1,0 +1,8 @@
+# Step 2. Write each value after its = sign, nothing else on the line. Before step 4's traffic.
+
+# Partitions of the DataFrame read_table(spark, "orders", partition_column="order_id") returns.
+jdbc_partitions=
+# make recent SINCE=2026-09-24: the PushedFilters list of the plan, as printed (from [ to ]).
+pushed_filters=
+# make recent SINCE=2026-09-24: the rows it counts.
+orders_since_2026_09_24=

@@ -1,0 +1,9 @@
+# The streaming lab's packages, plus what this project's steps use: Delta Lake for the lake's tables and ruff.
+# Pinned to the versions ProjLabs' own checks run with, so a result on your computer matches a result there.
+confluent-kafka==2.15.1
+delta-spark==3.3.3
+jupyterlab==4.6.4
+psycopg[binary]==3.3.6
+pyspark==3.5.9
+pytest==9.1.1
+ruff==0.16.10

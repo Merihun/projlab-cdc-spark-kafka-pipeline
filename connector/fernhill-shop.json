@@ -1,0 +1,24 @@
+{
+  "name": "fernhill-shop",
+  "config": {
+    "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+    "plugin.name": "...",
+    "database.hostname": "${POSTGRES_HOST}",
+    "database.port": "${POSTGRES_PORT}",
+    "database.user": "${POSTGRES_USER}",
+    "database.password": "...",
+    "database.dbname": "${POSTGRES_DB}",
+    "topic.prefix": "...",
+    "table.include.list": "...",
+    "slot.name": "...",
+    "publication.name": "fernhill_publication",
+    "publication.autocreate.mode": "filtered",
+    "snapshot.mode": "initial",
+    "decimal.handling.mode": "...",
+    "tombstones.on.delete": "true",
+    "key.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "key.converter.schemas.enable": "...",
+    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "value.converter.schemas.enable": "..."
+  }
+}
